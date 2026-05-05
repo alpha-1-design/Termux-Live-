@@ -25,29 +25,40 @@ export default function Terminal({ onCommand }: TerminalProps) {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && input.trim()) {
-      const newHistory = [...history, `$ ${input}`];
-      
-      // Simple command handle
-      if (input.startsWith('vibe')) {
-        const port = input.split(' ')[1] || '3000';
-        newHistory.push(`Intent sent: vibe://port/${port}`);
-        newHistory.push(`Target: http://127.0.0.1:${port}`);
-        onCommand?.(input);
-      } else if (input === 'help') {
-        newHistory.push('TermuxLive Commands:');
-        newHistory.push('  vibe <port>    - Switch preview to specific port');
-        newHistory.push('  scan           - Scan local ports for active dev servers');
-        newHistory.push('  status         - Show current connection status');
-        newHistory.push('  clear          - Clear terminal history');
-      } else if (input === 'clear') {
-        setHistory([]);
-        setInput('');
-        return;
-      } else {
-        newHistory.push(`sh: command not found: ${input}`);
-      }
+      setHistory(prev => {
+        const newHistory = [...prev, `$ ${input}`];
+        
+        // Command logic
+        const args = input.trim().split(/\s+/);
+        const cmd = args[0].toLowerCase();
+        
+        if (cmd === 'vibe') {
+          const port = args[1] || '3000';
+          newHistory.push(`Intent sent: vibe://port/${port}`);
+          newHistory.push(`Target: http://127.0.0.1:${port}`);
+          onCommand?.(input);
+        } else if (cmd === 'help') {
+          newHistory.push('TermuxLive Commands:');
+          newHistory.push('  vibe <port>    - Switch preview to specific port');
+          newHistory.push('  scan           - Scan local ports');
+          newHistory.push('  status         - Show connection status');
+          newHistory.push('  clear          - Clear terminal history');
+        } else if (cmd === 'clear') {
+          return [];
+        } else if (cmd === 'scan') {
+          newHistory.push('Starting discovery protocol...');
+          onCommand?.('scan');
+        } else if (cmd === 'status') {
+          newHistory.push('Session: ACTIVE');
+          newHistory.push('Shell: bash-5.1');
+          newHistory.push('Bridge: TermuxLive/0.1.2');
+        } else {
+          newHistory.push(`sh: command not found: ${cmd}`);
+        }
 
-      setHistory(newHistory);
+        // Limit history to 100 lines
+        return newHistory.slice(-100);
+      });
       setInput('');
     }
   };

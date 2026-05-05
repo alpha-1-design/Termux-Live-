@@ -14,6 +14,7 @@ interface ProjectDiscoveryProps {
   currentPort: string;
   onSelectProject: (port: string) => void;
   onShowDocs?: () => void;
+  triggerScan?: number;
 }
 
 const COMMON_PORTS = [
@@ -24,84 +25,103 @@ const COMMON_PORTS = [
   { port: '4200', name: 'Legacy Native', subtitle: 'Enterprise Port', framework: 'Angular' },
 ];
 
-export default function ProjectDiscovery({ currentPort, onSelectProject, onShowDocs }: ProjectDiscoveryProps) {
+export default function ProjectDiscovery({ currentPort, onSelectProject, onShowDocs, triggerScan = 0 }: ProjectDiscoveryProps) {
   const [projects, setProjects] = useState<Project[]>(COMMON_PORTS.map(p => ({ ...p, status: 'offline' })));
   const [isScanning, setIsScanning] = useState(false);
 
   const [lastCheck, setLastCheck] = useState<string>('Never');
 
   const scanPorts = async () => {
-    setIsScanning(true);
-    setLastCheck(new Date().toLocaleTimeString());
-    setProjects(prev => prev.map(p => ({ ...p, status: 'scanning' })));
+    try {
+      setIsScanning(true);
+      setLastCheck(new Date().toLocaleTimeString());
+      setProjects(prev => prev.map(p => ({ ...p, status: 'scanning' })));
 
-    const probe = async (port: string) => {
-      try {
+      const probe = async (port: string) => {
         return new Promise<'online' | 'offline'>((resolve) => {
           const img = new Image();
+          let resolved = false;
+
           const timer = setTimeout(() => {
-            img.src = '';
-            resolve('offline');
-          }, 1000);
+            if (!resolved) {
+              resolved = true;
+              img.src = '';
+              resolve('offline');
+            }
+          }, 1500);
 
           img.onload = () => {
-            clearTimeout(timer);
-            resolve('online');
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timer);
+              resolve('online');
+            }
           };
           img.onerror = () => {
-            clearTimeout(timer);
-            // In local bridge context, errors often mean 'refused' which means service is there but rejected headers
-            resolve('online'); 
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timer);
+              // In browser context for localhost probes, we'll be conservative.
+              // Most dev servers serve a favicon.
+              resolve('offline'); 
+            }
           };
           img.src = `http://127.0.0.1:${port}/favicon.ico?t=${Date.now()}`;
         });
-      } catch {
-        return 'offline';
-      }
-    };
+      };
 
-    const results = await Promise.all(
-      COMMON_PORTS.map(async (p) => {
-        const status = await probe(p.port);
-        return { ...p, status };
-      })
-    );
+      const results = await Promise.all(
+        COMMON_PORTS.map(async (p) => {
+          const status = await probe(p.port);
+          return { ...p, status };
+        })
+      );
 
-    const updatedProjects = results as Project[];
-    setProjects(updatedProjects);
-    setIsScanning(false);
+      const updatedProjects = results as Project[];
+      setProjects(updatedProjects);
+      setIsScanning(false);
 
-    // AUTO-CONNECT LOGIC
-    // Priority: 5173 (Vite) > 3000 (Node) > 8000 (Python) > 8080 > 4200
-    const priorityOrder = ['5173', '3000', '8000', '8080', '4200'];
-    const online = updatedProjects.filter(p => p.status === 'online');
-    
-    if (online.length > 0) {
-      // Find the "best" available port based on priority
-      const best = online.sort((a, b) => {
-        const indexA = priorityOrder.indexOf(a.port);
-        const indexB = priorityOrder.indexOf(b.port);
-        return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
-      })[0];
-
-      // Auto-connect if:
-      // 1. We don't have a port yet
-      // 2. Our current port is offline
-      // 3. We found a higher priority port than the current one
-      const currentStatus = updatedProjects.find(p => p.port === currentPort)?.status;
-      const isCurrentOffline = !currentPort || currentStatus === 'offline';
+      // AUTO-CONNECT LOGIC
+      // Priority: 5173 (Vite) > 3000 (Node) > 8000 (Python) > 8080 > 4200
+      const priorityOrder = ['5173', '3000', '8000', '8080', '4200'];
+      const online = updatedProjects.filter(p => p.status === 'online');
       
-      const currentPriority = priorityOrder.indexOf(currentPort);
-      const bestPriority = priorityOrder.indexOf(best.port);
-      const isHigherPriorityFound = bestPriority < (currentPriority === -1 ? 99 : currentPriority);
+      if (online.length > 0) {
+        // Find the "best" available port based on priority
+        const best = online.sort((a, b) => {
+          const indexA = priorityOrder.indexOf(a.port);
+          const indexB = priorityOrder.indexOf(b.port);
+          return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+        })[0];
 
-      if (best && (isCurrentOffline || isHigherPriorityFound)) {
-        if (best.port !== currentPort) {
-          onSelectProject(best.port);
+        // Auto-connect if:
+        // 1. We don't have a port yet
+        // 2. Our current port is offline
+        // 3. We found a higher priority port than the current one
+        const currentStatus = updatedProjects.find(p => p.port === currentPort)?.status;
+        const isCurrentOffline = !currentPort || currentStatus === 'offline';
+        
+        const currentPriority = priorityOrder.indexOf(currentPort);
+        const bestPriority = priorityOrder.indexOf(best.port);
+        const isHigherPriorityFound = bestPriority < (currentPriority === -1 ? 99 : currentPriority);
+
+        if (best && (isCurrentOffline || isHigherPriorityFound)) {
+          if (best.port !== currentPort) {
+            onSelectProject(best.port);
+          }
         }
       }
+    } catch (e) {
+      console.warn('Scan ports failed:', e);
+      setIsScanning(false);
     }
   };
+
+  useEffect(() => {
+    if (triggerScan > 0) {
+      scanPorts();
+    }
+  }, [triggerScan]);
 
   useEffect(() => {
     scanPorts();
