@@ -13,6 +13,7 @@ interface Project {
 interface ProjectDiscoveryProps {
   currentPort: string;
   onSelectProject: (port: string) => void;
+  onShowDocs?: () => void;
 }
 
 const COMMON_PORTS = [
@@ -23,7 +24,7 @@ const COMMON_PORTS = [
   { port: '4200', name: 'Angular Dev', subtitle: 'Enterprise UI', framework: 'Angular' },
 ];
 
-export default function ProjectDiscovery({ currentPort, onSelectProject }: ProjectDiscoveryProps) {
+export default function ProjectDiscovery({ currentPort, onSelectProject, onShowDocs }: ProjectDiscoveryProps) {
   const [projects, setProjects] = useState<Project[]>(COMMON_PORTS.map(p => ({ ...p, status: 'offline' })));
   const [isScanning, setIsScanning] = useState(false);
 
@@ -109,6 +110,8 @@ export default function ProjectDiscovery({ currentPort, onSelectProject }: Proje
     return () => clearInterval(interval);
   }, []);
 
+  const onlineProjects = projects.filter(p => p.status === 'online');
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -133,60 +136,84 @@ export default function ProjectDiscovery({ currentPort, onSelectProject }: Proje
 
       <div className="space-y-2">
         <AnimatePresence mode="popLayout">
-          {projects.map((project) => (
-            <motion.button
-              layout
-              key={project.port}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              onClick={() => project.status === 'online' && onSelectProject(project.port)}
-              className={`w-full text-left p-3 rounded-xl border transition-all relative group overflow-hidden ${
-                currentPort === project.port 
-                  ? 'bg-cyan-500/10 border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.05)]' 
-                  : project.status === 'online'
-                    ? 'bg-white/5 border-white/5 hover:border-white/20 active:scale-[0.98]'
-                    : 'bg-black/20 border-white/5 opacity-40 cursor-not-allowed'
-              }`}
-            >
-              <div className="flex items-center gap-3 relative z-10">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
-                   currentPort === project.port ? 'bg-cyan-400/20 border-cyan-400/30 text-cyan-400' : 'bg-black/40 border-white/5 text-slate-500'
-                }`}>
-                  {project.framework === 'React' ? <Globe size={14} /> : <Server size={14} />}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[11px] font-black uppercase tracking-tight truncate ${currentPort === project.port ? 'text-white' : 'text-slate-300'}`}>
-                      {project.name}
-                    </span>
-                    <span className="text-[10px] font-mono opacity-50">:{project.port}</span>
+          {onlineProjects.length > 0 ? (
+            projects.map((project) => (
+              <motion.button
+                layout
+                key={project.port}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                onClick={() => project.status === 'online' && onSelectProject(project.port)}
+                className={`w-full text-left p-3 rounded-xl border transition-all relative group overflow-hidden ${
+                  currentPort === project.port 
+                    ? 'bg-cyan-500/10 border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.05)]' 
+                    : project.status === 'online'
+                      ? 'bg-white/5 border-white/5 hover:border-white/20 active:scale-[0.98]'
+                      : 'bg-black/20 border-white/5 opacity-40 cursor-not-allowed'
+                }`}
+              >
+                <div className="flex items-center gap-3 relative z-10">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
+                     currentPort === project.port ? 'bg-cyan-400/20 border-cyan-400/30 text-cyan-400' : 'bg-black/40 border-white/5 text-slate-500'
+                  }`}>
+                    {project.framework === 'React' ? <Globe size={14} /> : <Server size={14} />}
                   </div>
-                  <div className="text-[9px] text-slate-500 uppercase font-bold tracking-widest truncate">{project.subtitle}</div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[11px] font-black uppercase tracking-tight truncate ${currentPort === project.port ? 'text-white' : 'text-slate-300'}`}>
+                        {project.name}
+                      </span>
+                      <span className="text-[10px] font-mono opacity-50">:{project.port}</span>
+                    </div>
+                    <div className="text-[9px] text-slate-500 uppercase font-bold tracking-widest truncate">{project.subtitle}</div>
+                  </div>
+
+                  <div className="flex items-center justify-center w-5">
+                    {project.status === 'scanning' ? (
+                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                    ) : project.status === 'online' ? (
+                      <CheckCircle2 size={12} className="text-green-500" />
+                    ) : (
+                      <AlertCircle size={12} className="text-slate-700" />
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-center w-5">
-                  {project.status === 'scanning' ? (
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  ) : project.status === 'online' ? (
-                    <CheckCircle2 size={12} className="text-green-500" />
-                  ) : (
-                    <AlertCircle size={12} className="text-slate-700" />
-                  )}
-                </div>
+                {/* Selection Indicator */}
+                {currentPort === project.port && (
+                  <motion.div 
+                    layoutId="active-border"
+                    className="absolute inset-0 border border-cyan-400/50 rounded-xl"
+                    initial={false}
+                  />
+                )}
+              </motion.button>
+            ))
+          ) : !isScanning && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 bg-white/5 rounded-2xl border border-dashed border-white/10 text-center space-y-3"
+            >
+              <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-600">
+                <Cpu size={20} />
               </div>
-
-              {/* Selection Indicator */}
-              {currentPort === project.port && (
-                <motion.div 
-                  layoutId="active-border"
-                  className="absolute inset-0 border border-cyan-400/50 rounded-xl"
-                  initial={false}
-                />
-              )}
-            </motion.button>
-          ))}
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-slate-200 uppercase tracking-widest">No Active Servers</p>
+                <p className="text-[9px] text-slate-500 leading-relaxed uppercase font-mono">
+                  Probing complete. No local development services detected on standard ports.
+                </p>
+              </div>
+              <button 
+                onClick={onShowDocs}
+                className="text-[10px] font-black text-cyan-400 hover:text-cyan-300 uppercase tracking-tighter italic border-b border-cyan-400/20 pb-0.5"
+              >
+                Learn how to start a service &rarr;
+              </button>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 

@@ -111,6 +111,7 @@ export default function App() {
                 <ProjectDiscovery 
                   currentPort={currentPort} 
                   onSelectProject={setCurrentPort} 
+                  onShowDocs={() => setActiveTab('docs')}
                 />
               </div>
 
