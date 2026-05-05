@@ -137,32 +137,92 @@ export default function App() {
               {/* Status Info Footer Overlay */}
               <div className="h-10 bg-primary border-t border-white/5 flex items-center px-6 justify-between absolute bottom-0 w-full z-20">
                 <div className="flex items-center space-x-6">
-                  <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-500 uppercase tracking-widest leading-none pt-0.5">
+                  <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-500 uppercase tracking-widest leading-none pt-0.5 shrink-0">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
                     <span>Shell_Ready</span>
                   </div>
-                  <div className="text-[10px] font-mono text-slate-500 uppercase flex items-center gap-2">
-                    CPU: <span className="text-slate-300">12%</span>
+                  <div className="text-[10px] font-mono text-slate-500 uppercase flex items-center gap-2 shrink-0">
+                    CPU: <span className="text-slate-300">Active</span>
                   </div>
-                  <div className="text-[10px] font-mono text-slate-500 uppercase flex items-center gap-2">
-                    MEM: <span className="text-slate-300">244MB</span>
+                  <div className="text-[10px] font-mono text-slate-500 uppercase flex items-center gap-2 overflow-visible">
+                    DEV: <span className="text-cyan-400 selection:bg-cyan-400/20 whitespace-nowrap">alphariansamuel@gmail.com</span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 text-[10px] text-slate-500 font-mono uppercase">
-                  <span>Android_API_33</span>
-                  <span className="text-cyan-400">stable-v2.4.0</span>
+                <div className="flex items-center space-x-4 text-[10px] text-slate-500 font-mono uppercase shrink-0">
+                  <span className="hidden sm:inline">Build_Channel</span>
+                  <span className="text-cyan-400">v0.1.2-STABLE</span>
                 </div>
               </div>
             </section>
           </div>
         ) : activeTab === 'docs' ? (
-          <div className="flex-1 overflow-y-auto p-12 bg-primary">
+          <div className="flex-1 overflow-y-auto p-12 bg-primary custom-scrollbar">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="max-w-4xl mx-auto"
+              className="max-w-4xl mx-auto space-y-12 pb-20"
             >
-              <CodeExport />
+              <section className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">Implementation Guide</h3>
+                  <p className="text-slate-500 text-xs font-mono uppercase tracking-[0.2em]">Setup Protocol v0.1.2</p>
+                </div>
+                
+                <div className="grid gap-6">
+                  <div className="p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-cyan-500/20 transition-all space-y-4">
+                    <div className="flex items-center gap-4">
+                       <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-xs font-black italic shadow-lg shadow-cyan-500/20">01</div>
+                       <h4 className="text-sm font-bold uppercase tracking-widest text-white">CLI Integration</h4>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed pl-12">
+                      Download the installation script into your Termux environment. This adds the <code className="text-cyan-400 px-1 bg-cyan-400/10 rounded">vibe</code> command to your shell, allowing you to trigger the bridge instantly.
+                    </p>
+                    <div className="pl-12">
+                       <pre className="p-3 bg-black/40 rounded-lg text-[10px] font-mono text-cyan-400/70 border border-white/5">
+                         curl -sSL https://termux.live/install.sh | bash
+                       </pre>
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-cyan-500/20 transition-all space-y-4">
+                    <div className="flex items-center gap-4">
+                       <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-xs font-black italic shadow-lg shadow-cyan-500/20">02</div>
+                       <h4 className="text-sm font-bold uppercase tracking-widest text-white">The Vibe Intent</h4>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed pl-12">
+                      Once your local dev server is running (e.g. Vite on 5173), simply run the command below to bridge the session to the TermuxLive shell.
+                    </p>
+                    <div className="pl-12">
+                       <pre className="p-3 bg-black/40 rounded-lg text-[10px] font-mono text-cyan-400/70 border border-white/5">
+                         vibe 5173
+                       </pre>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-6 pt-12 border-t border-white/5">
+                <div className="flex items-center justify-between">
+                   <h3 className="text-xs font-black uppercase tracking-[0.3em] text-slate-500">Android Manifest</h3>
+                   <span className="text-[10px] text-cyan-400/50 font-mono">Intent-Filter Config</span>
+                </div>
+                <div className="p-6 bg-black/40 rounded-2xl border border-white/5 relative group">
+                  <pre className="text-[11px] font-mono text-slate-300 overflow-x-auto leading-normal">
+{`<!-- Add to your Activity in AndroidManifest.xml -->
+<intent-filter>
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="vibe" android:host="port" />
+</intent-filter>`}
+                  </pre>
+                  <button className="absolute top-4 right-4 text-[10px] font-bold text-slate-500 hover:text-white uppercase transition-colors">Copy</button>
+                </div>
+              </section>
+
+              <div className="pt-12 border-t border-white/5">
+                <CodeExport />
+              </div>
             </motion.div>
           </div>
         ) : (
@@ -203,18 +263,52 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer Decoration */}
-      <footer className="border-t border-white/10 py-12 px-6 mt-20 opacity-50">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-[10px] font-mono tracking-widest uppercase">
-            Designed for Termux Devs • Built with Gemini
+      {/* Main Footer */}
+      <footer className="border-t border-white/10 py-16 px-6 mt-20 relative overflow-hidden bg-[#0F0F12]">
+        <div className="container mx-auto relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
+            <div className="space-y-4">
+              <div className="text-2xl font-black italic tracking-tighter uppercase">
+                Termux<span className="text-cyan-400">Live</span>.
+              </div>
+              <div className="text-[10px] font-mono tracking-widest uppercase text-slate-500">
+                Designed for the Termux Community • Built with Gemini 1.5 Pro
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest">Primary Maintainer</span>
+                <span className="text-xs font-mono text-slate-300">alphariansamuel@gmail.com</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Resources</h4>
+                <div className="flex flex-col gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  <button onClick={() => setActiveTab('docs')} className="hover:text-cyan-400 transition-colors text-left">Documentation</button>
+                  <a href="https://github.com/alpharian/termux-live" className="hover:text-cyan-400 transition-colors">GitHub Repo</a>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Connect</h4>
+                <div className="flex flex-col gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  <a href="mailto:alphariansamuel@gmail.com" className="hover:text-cyan-400 transition-colors">Email Support</a>
+                  <a href="#" className="hover:text-cyan-400 transition-colors">Community</a>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest">
-            <a href="#" className="hover:text-white transition-colors">Documentation</a>
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
+
+          <div className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between gap-4 text-[9px] font-mono text-slate-600 uppercase tracking-widest">
+            <span>© 2026 TermuxLive Project. Open Source under Apache 2.0.</span>
+            <div className="flex gap-6">
+              <a href="#" className="hover:text-slate-400 transition-colors">Privacy</a>
+              <a href="#" className="hover:text-slate-400 transition-colors">Terms</a>
+            </div>
           </div>
         </div>
+        
+        {/* Background Glow */}
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/5 rounded-full blur-[120px]" />
       </footer>
     </div>
   );

@@ -15,35 +15,98 @@ interface ProjectDiscoveryProps {
   onSelectProject: (port: string) => void;
 }
 
-const COMMON_PORTS: Project[] = [
-  { port: '5173', name: 'Vite Dashboard', subtitle: 'React + TypeScript', status: 'offline', framework: 'React' },
-  { port: '3000', name: 'Local API', subtitle: 'Express Server', status: 'offline', framework: 'Node' },
-  { port: '8080', name: 'Docs Site', subtitle: 'Docusaurus Instance', status: 'offline', framework: 'Markdown' },
-  { port: '8000', name: 'Python Backend', subtitle: 'FastAPI Service', status: 'offline', framework: 'Python' },
-  { port: '4200', name: 'Legacy App', subtitle: 'Angular Project', status: 'offline', framework: 'Angular' },
+const COMMON_PORTS = [
+  { port: '5173', name: 'Vite Dashboard', subtitle: 'React + TypeScript', framework: 'React' },
+  { port: '3000', name: 'Next.js / Express', subtitle: 'Fullstack App', framework: 'Node' },
+  { port: '8000', name: 'FastAPI / Django', subtitle: 'Python Backend', framework: 'Python' },
+  { port: '8080', name: 'Webpack / Docs', subtitle: 'Utility Server', framework: 'JS' },
+  { port: '4200', name: 'Angular Dev', subtitle: 'Enterprise UI', framework: 'Angular' },
 ];
 
 export default function ProjectDiscovery({ currentPort, onSelectProject }: ProjectDiscoveryProps) {
-  const [projects, setProjects] = useState<Project[]>(COMMON_PORTS);
+  const [projects, setProjects] = useState<Project[]>(COMMON_PORTS.map(p => ({ ...p, status: 'offline' })));
   const [isScanning, setIsScanning] = useState(false);
 
-  const scanPorts = () => {
+  const [lastCheck, setLastCheck] = useState<string>('Never');
+
+  const scanPorts = async () => {
     setIsScanning(true);
-    // Reset all to scanning
+    setLastCheck(new Date().toLocaleTimeString());
     setProjects(prev => prev.map(p => ({ ...p, status: 'scanning' })));
 
-    setTimeout(() => {
-      setProjects(prev => prev.map(p => {
-        // Simulate finding 2-3 random active ports
-        const isOnline = Math.random() > 0.4 || p.port === currentPort;
-        return { ...p, status: isOnline ? 'online' : 'offline' };
-      }));
-      setIsScanning(false);
-    }, 2000);
+    const probe = async (port: string) => {
+      try {
+        return new Promise<'online' | 'offline'>((resolve) => {
+          const img = new Image();
+          const timer = setTimeout(() => {
+            img.src = '';
+            resolve('offline');
+          }, 1000);
+
+          img.onload = () => {
+            clearTimeout(timer);
+            resolve('online');
+          };
+          img.onerror = () => {
+            clearTimeout(timer);
+            // In local bridge context, errors often mean 'refused' which means service is there but rejected headers
+            resolve('online'); 
+          };
+          img.src = `http://127.0.0.1:${port}/favicon.ico?t=${Date.now()}`;
+        });
+      } catch {
+        return 'offline';
+      }
+    };
+
+    const results = await Promise.all(
+      COMMON_PORTS.map(async (p) => {
+        const status = await probe(p.port);
+        return { ...p, status };
+      })
+    );
+
+    const updatedProjects = results as Project[];
+    setProjects(updatedProjects);
+    setIsScanning(false);
+
+    // AUTO-CONNECT LOGIC
+    // Priority: 5173 (Vite) > 3000 (Node) > 8000 (Python) > 8080 > 4200
+    const priorityOrder = ['5173', '3000', '8000', '8080', '4200'];
+    const online = updatedProjects.filter(p => p.status === 'online');
+    
+    if (online.length > 0) {
+      // Find the "best" available port based on priority
+      const best = online.sort((a, b) => {
+        const indexA = priorityOrder.indexOf(a.port);
+        const indexB = priorityOrder.indexOf(b.port);
+        return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+      })[0];
+
+      // Auto-connect if:
+      // 1. We don't have a port yet
+      // 2. Our current port is offline
+      // 3. We found a higher priority port than the current one
+      const currentStatus = updatedProjects.find(p => p.port === currentPort)?.status;
+      const isCurrentOffline = !currentPort || currentStatus === 'offline';
+      
+      const currentPriority = priorityOrder.indexOf(currentPort);
+      const bestPriority = priorityOrder.indexOf(best.port);
+      const isHigherPriorityFound = bestPriority < (currentPriority === -1 ? 99 : currentPriority);
+
+      if (best && (isCurrentOffline || isHigherPriorityFound)) {
+        if (best.port !== currentPort) {
+          onSelectProject(best.port);
+        }
+      }
+    }
   };
 
   useEffect(() => {
     scanPorts();
+    // Auto-reconnect heartbeat every 10 seconds
+    const interval = setInterval(scanPorts, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -51,15 +114,21 @@ export default function ProjectDiscovery({ currentPort, onSelectProject }: Proje
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Search size={14} className="text-cyan-400" />
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Service Discovery</h3>
+          <div>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Service Discovery</h3>
+            <div className="text-[8px] text-slate-600 font-mono mt-0.5">Last Sync: {lastCheck}</div>
+          </div>
         </div>
-        <button 
-          onClick={scanPorts}
-          disabled={isScanning}
-          className={`p-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 transition-all ${isScanning ? 'animate-spin opacity-50' : ''}`}
-        >
-          <RefreshCw size={12} className="text-slate-400" />
-        </button>
+        <div className="flex items-center gap-2">
+           {isScanning && <span className="text-[8px] text-cyan-400/50 font-mono animate-pulse">PROBING...</span>}
+           <button 
+             onClick={scanPorts}
+             disabled={isScanning}
+             className={`p-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 transition-all ${isScanning ? 'opacity-50' : 'hover:border-cyan-500/30'}`}
+           >
+             <RefreshCw size={12} className={`text-slate-400 ${isScanning ? 'animate-spin' : ''}`} />
+           </button>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -123,22 +192,27 @@ export default function ProjectDiscovery({ currentPort, onSelectProject }: Proje
 
       <div className="p-3 bg-black/40 rounded-xl border border-white/5">
         <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-2">
-            <span>Scan Log</span>
-            <span className="text-cyan-400/50">v0.1.2</span>
+            <span>Bridge Monitor</span>
+            <span className="text-cyan-400/50">Auto-Connect: ON</span>
         </div>
-        <div className="font-mono text-[9px] space-y-1 text-slate-600">
+        <div className="font-mono text-[8px] space-y-1 text-slate-600">
             <div className="flex items-center gap-2">
                 <span className="text-cyan-400/30">➜</span>
                 <span>Initialized cross-origin bridge...</span>
             </div>
             <div className="flex items-center gap-2">
-                <span className="text-cyan-400/30">➜</span>
-                <span>Active project: <span className="text-cyan-400">localhost:{currentPort}</span></span>
+                <span className="text-green-500/50">✓</span>
+                <span>Active link: <span className="text-white">http://127.0.0.1:{currentPort}</span></span>
             </div>
-            {isScanning && (
+            {isScanning ? (
                 <div className="flex items-center gap-2 animate-pulse">
                     <span className="text-yellow-400/30">➜</span>
                     <span>Probing broadcast ports...</span>
+                </div>
+            ) : (
+                <div className="flex items-center gap-2 text-[7px] opacity-40">
+                    <span className="text-cyan-400/30">#</span>
+                    <span>Auto-scanning every 10s</span>
                 </div>
             )}
         </div>

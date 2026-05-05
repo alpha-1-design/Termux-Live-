@@ -1,24 +1,39 @@
 #!/bin/bash
 
-# TermuxLive Installation Script
-# Run this inside Termux to set up the 'vibe' command
+# ==========================================
+# TermuxLive Installer (v0.1.2)
+# ==========================================
 
-echo "Installing TermuxLive Shell Helpers..."
+set -e
 
-# Add alias to .bashrc if not already present
-if ! grep -q "alias vibe=" ~/.bashrc; then
-    echo "alias vibe='am start -d \"vibe://port/\$1\" -a android.intent.action.VIEW com.termux.live'" >> ~/.bashrc
-    echo "✓ Alias 'vibe' added to .bashrc"
+echo "🚀 Installing TermuxLive Shell Helpers..."
+
+# 1. Add alias to .bashrc
+BASHRC_PATH="$HOME/.bashrc"
+ALIAS_CMD="alias vibe='am start -d \"vibe://port/\$1\" -a android.intent.action.VIEW com.termux.live'"
+
+if ! grep -q "alias vibe=" "$BASHRC_PATH"; then
+    echo "$ALIAS_CMD" >> "$BASHRC_PATH"
+    echo "✅ Alias 'vibe' attached to $BASHRC_PATH"
 else
-    echo "• Alias 'vibe' already exists in .bashrc"
+    echo "ℹ️  Alias 'vibe' already configured."
 fi
 
-# Reload bashrc
-source ~/.bashrc
+# 2. Check for Android intent capability
+if command -v am > /dev/null; then
+    echo "✅ Android Activity Manager detected."
+else
+    echo "⚠️  Warning: 'am' command not found. Are you running this inside Termux?"
+fi
 
 echo ""
-echo "Installation complete!"
+echo "🎉 Setup Complete!"
+echo "----------------------------------------"
 echo "Usage: vibe <port>"
-echo "Example: vibe 3000"
-echo ""
-echo "Note: Make sure you have the TermuxLive Android APK installed on your device."
+echo "Example: vibe 5173"
+echo "----------------------------------------"
+echo "Note: Ensure the TermuxLive APK is installed on your device."
+
+# Reload session (for current shell)
+# Note: In some environments source might fail, so we advise the user
+echo "Please run 'source ~/.bashrc' or restart Termux to start vibing."

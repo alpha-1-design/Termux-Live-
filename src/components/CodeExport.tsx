@@ -18,25 +18,47 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.WindowManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+/**
+ * PRODUCTION-READY TERMUXLIVE SHELL
+ * Features: Overlay support, JS Injection, and Custom Scheme handling.
+ */
 public class MainActivity extends Activity {
     private WebView mWebView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Ensure floating behavior if enabled
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+        
         setContentView(R.layout.activity_main);
 
         mWebView = findViewById(R.id.webview);
-        WebSettings settings = mWebView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
+        setupWebView();
         
-        // Handle Intent
         handleIntent(getIntent());
+    }
+
+    private void setupWebView() {
+        WebSettings s = mWebView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setDatabaseEnabled(true);
+        s.setAllowFileAccess(true);
+        s.setAllowContentAccess(true);
+        
+        mWebView.setWebViewClient(new WebViewClient());
+        mWebView.setWebChromeClient(new WebChromeClient());
+
+        // Optional: Inject Eruda for mobile debugging
+        mWebView.loadUrl("javascript:(function () { var script = document.createElement('script'); script.src='//cdn.jsdelivr.net/npm/eruda'; document.body.appendChild(script); script.onload = function () { eruda.init() } })();");
     }
 
     @Override
@@ -49,16 +71,26 @@ public class MainActivity extends Activity {
         Uri data = intent.getData();
         if (data != null && "vibe".equals(data.getScheme())) {
             String port = data.getLastPathSegment();
+            // Connect to local loopback (Termux session)
             mWebView.loadUrl("http://127.0.0.1:" + port);
         }
     }
 }`,
-    manifest: `<intent-filter>
-    <action android:name="android.intent.action.VIEW" />
-    <category android:name="android.intent.category.DEFAULT" />
-    <category android:name="android.intent.category.BROWSABLE" />
-    <data android:scheme="vibe" android:host="port" />
-</intent-filter>`
+    manifest: `<!-- REQUIRED PERMISSIONS -->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+<activity 
+    android:name=".MainActivity"
+    android:launchMode="singleTask"
+    android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+    <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="vibe" android:host="port" />
+    </intent-filter>
+</activity>`
   };
 
   return (
