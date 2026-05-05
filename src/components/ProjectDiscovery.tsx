@@ -17,11 +17,11 @@ interface ProjectDiscoveryProps {
 }
 
 const COMMON_PORTS = [
-  { port: '5173', name: 'Vite Dashboard', subtitle: 'React + TypeScript', framework: 'React' },
-  { port: '3000', name: 'Next.js / Express', subtitle: 'Fullstack App', framework: 'Node' },
-  { port: '8000', name: 'FastAPI / Django', subtitle: 'Python Backend', framework: 'Python' },
-  { port: '8080', name: 'Webpack / Docs', subtitle: 'Utility Server', framework: 'JS' },
-  { port: '4200', name: 'Angular Dev', subtitle: 'Enterprise UI', framework: 'Angular' },
+  { port: '5173', name: 'Vite Service', subtitle: 'Auto-Detected Node', framework: 'React' },
+  { port: '3000', name: 'React/API', subtitle: 'Fullstack Instance', framework: 'Node' },
+  { port: '8000', name: 'Backend Socket', subtitle: 'Logic Engine', framework: 'Python' },
+  { port: '8080', name: 'Utility Stream', subtitle: 'Dev Tools', framework: 'JS' },
+  { port: '4200', name: 'Legacy Native', subtitle: 'Enterprise Port', framework: 'Angular' },
 ];
 
 export default function ProjectDiscovery({ currentPort, onSelectProject, onShowDocs }: ProjectDiscoveryProps) {

@@ -142,11 +142,11 @@ export default function App() {
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
                     <span>Shell_Ready</span>
                   </div>
-                  <div className="text-[10px] font-mono text-slate-500 uppercase flex items-center gap-2 shrink-0">
+                  <div className="text-[10px] font-mono text-slate-500 uppercase flex items-center gap-2 pr-4 border-r border-white/5">
                     CPU: <span className="text-slate-300">Active</span>
                   </div>
-                  <div className="text-[10px] font-mono text-slate-500 uppercase flex items-center gap-2 overflow-visible">
-                    DEV: <span className="text-cyan-400 selection:bg-cyan-400/20 whitespace-nowrap">alphariansamuel@gmail.com</span>
+                  <div className="text-[10px] font-mono text-slate-500 uppercase flex items-center gap-2 max-w-[200px] sm:max-w-none">
+                    USER: <span className="text-cyan-400 selection:bg-cyan-400/20 truncate">alphariansamuel@gmail.com</span>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4 text-[10px] text-slate-500 font-mono uppercase shrink-0">
