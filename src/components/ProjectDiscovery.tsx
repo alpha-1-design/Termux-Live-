@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, RefreshCw, Globe, Server, Cpu, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -31,7 +31,7 @@ export default function ProjectDiscovery({ currentPort, onSelectProject, onShowD
 
   const [lastCheck, setLastCheck] = useState<string>('Never');
 
-  const scanPorts = async () => {
+  const scanPorts = useCallback(async () => {
     try {
       setIsScanning(true);
       setLastCheck(new Date().toLocaleTimeString());
@@ -82,22 +82,16 @@ export default function ProjectDiscovery({ currentPort, onSelectProject, onShowD
       setIsScanning(false);
 
       // AUTO-CONNECT LOGIC
-      // Priority: 5173 (Vite) > 3000 (Node) > 8000 (Python) > 8080 > 4200
       const priorityOrder = ['5173', '3000', '8000', '8080', '4200'];
       const online = updatedProjects.filter(p => p.status === 'online');
       
       if (online.length > 0) {
-        // Find the "best" available port based on priority
         const best = online.sort((a, b) => {
           const indexA = priorityOrder.indexOf(a.port);
           const indexB = priorityOrder.indexOf(b.port);
           return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
         })[0];
 
-        // Auto-connect if:
-        // 1. We don't have a port yet
-        // 2. Our current port is offline
-        // 3. We found a higher priority port than the current one
         const currentStatus = updatedProjects.find(p => p.port === currentPort)?.status;
         const isCurrentOffline = !currentPort || currentStatus === 'offline';
         
@@ -115,20 +109,19 @@ export default function ProjectDiscovery({ currentPort, onSelectProject, onShowD
       console.warn('Scan ports failed:', e);
       setIsScanning(false);
     }
-  };
+  }, [currentPort, onSelectProject]);
 
   useEffect(() => {
     if (triggerScan > 0) {
       scanPorts();
     }
-  }, [triggerScan]);
+  }, [triggerScan, scanPorts]);
 
   useEffect(() => {
     scanPorts();
-    // Auto-reconnect heartbeat every 10 seconds
-    const interval = setInterval(scanPorts, 10000);
+    const interval = setInterval(scanPorts, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [scanPorts]);
 
   const onlineProjects = projects.filter(p => p.status === 'online');
 

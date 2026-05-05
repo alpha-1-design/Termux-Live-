@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, Component, ReactNode, ErrorInfo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Layout, Terminal as TerminalIcon, Github, Monitor, Phone, Info, Activity, Download, Heart, Code2 } from 'lucide-react';
 import { App as CapApp } from '@capacitor/app';
@@ -17,16 +17,26 @@ export default function App() {
   const [currentPort, setCurrentPort] = useState('3000');
   const [scanTrigger, setScanTrigger] = useState(0);
 
+  const handleCommand = useCallback((cmd: string) => {
+    const trimmedCmd = cmd.trim();
+    if (trimmedCmd.startsWith('vibe')) {
+      const port = trimmedCmd.split(/\s+/)[1] || '3000';
+      if (/^\d+$/.test(port)) {
+        setCurrentPort(port);
+      }
+    } else if (trimmedCmd === 'scan') {
+      setScanTrigger(prev => prev + 1);
+    }
+  }, []);
+
   useEffect(() => {
-    // Handle Capacitor Deep Links
+    let listener: any = null;
+
     const setupListeners = async () => {
       try {
-        // Only run on native platforms if possible, or handle gracefully
-        const listener = await CapApp.addListener('appUrlOpen', data => {
+        listener = await CapApp.addListener('appUrlOpen', data => {
           console.log('App opened with URL:', data.url);
           try {
-            // Some deep links might not have double slashes, e.g., vibe:5173
-            // new URL() might fail if the scheme is non-standard and missing //
             let urlString = data.url;
             if (urlString.startsWith('vibe:') && !urlString.startsWith('vibe://')) {
               urlString = urlString.replace('vibe:', 'vibe://');
@@ -34,9 +44,6 @@ export default function App() {
             
             const url = new URL(urlString);
             if (url.protocol === 'vibe:') {
-              // Logic check: if host is 'port', the number is in the path
-              // vibe://port/5173 -> host="port", path="/5173"
-              // vibe://5173 -> host="5173", path=""
               let port = url.host;
               if (port === 'port') {
                 port = url.pathname.replace('/', '');
@@ -51,38 +58,28 @@ export default function App() {
             console.warn('Failed to parse deep link URL:', data.url, e);
           }
         });
-
-        return () => {
-          listener.remove();
-        };
       } catch (e) {
         console.warn('Capacitor App plugin not available:', e);
       }
     };
 
-    let cleanup: (() => void) | undefined;
-    setupListeners().then(cb => { cleanup = cb; });
+    setupListeners();
 
     return () => {
-      if (cleanup) cleanup();
+      if (listener) {
+        try {
+          listener.remove();
+        } catch (e) {
+          // ignore
+        }
+      }
       try {
         CapApp.removeAllListeners();
       } catch (e) {
-        // Ignore if plugin not available
+        // ignore
       }
     };
   }, []);
-
-  const handleCommand = (cmd: string) => {
-    if (cmd.startsWith('vibe')) {
-      const port = cmd.trim().split(/\s+/)[1] || '3000';
-      if (/^\d+$/.test(port)) {
-        setCurrentPort(port);
-      }
-    } else if (cmd === 'scan') {
-      setScanTrigger(prev => prev + 1);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-primary text-slate-200 font-sans selection:bg-cyan-500 selection:text-white flex flex-col overflow-hidden">
