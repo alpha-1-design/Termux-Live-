@@ -1,0 +1,6 @@
+{
+  "name": "TermuxLive",
+  "description": "A floating previewer and live window for Termux development projects with auto-reconnection and smart port switching.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
