@@ -134,83 +134,88 @@ export default function ProjectDiscovery({ currentPort, onSelectProject, onShowD
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <AnimatePresence mode="popLayout">
-          {onlineProjects.length > 0 ? (
-            projects.map((project) => (
+          {isScanning && projects.every(p => p.status === 'offline') ? (
+            // Shimmer Loading State
+            [...Array(3)].map((_, i) => (
+              <div key={i} className="w-full h-16 bg-white/5 rounded-2xl border border-white/5 animate-pulse overflow-hidden relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                <div className="h-full flex items-center gap-3 px-4">
+                  <div className="w-8 h-8 rounded-lg bg-white/5" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-2 w-24 bg-white/5 rounded" />
+                    <div className="h-2 w-16 bg-white/5 rounded" />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : onlineProjects.length > 0 ? (
+            projects.filter(p => p.status === 'online' || p.status === 'scanning').map((project) => (
               <motion.button
                 layout
                 key={project.port}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 onClick={() => project.status === 'online' && onSelectProject(project.port)}
-                className={`w-full text-left p-3 rounded-xl border transition-all relative group overflow-hidden ${
+                className={`w-full text-left p-4 rounded-2xl border transition-all relative group ${
                   currentPort === project.port 
-                    ? 'bg-cyan-500/10 border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.05)]' 
+                    ? 'bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-white' 
                     : project.status === 'online'
-                      ? 'bg-white/5 border-white/5 hover:border-white/20 active:scale-[0.98]'
+                      ? 'bg-white/5 border-white/5 hover:bg-white/[0.07] hover:border-white/10 active:scale-[0.98]'
                       : 'bg-black/20 border-white/5 opacity-40 cursor-not-allowed'
                 }`}
               >
-                <div className="flex items-center gap-3 relative z-10">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
-                     currentPort === project.port ? 'bg-cyan-400/20 border-cyan-400/30 text-cyan-400' : 'bg-black/40 border-white/5 text-slate-500'
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-colors ${
+                     currentPort === project.port ? 'bg-cyan-500 border-cyan-400 text-white' : 'bg-black/40 border-white/5 text-slate-500'
                   }`}>
-                    {project.framework === 'React' ? <Globe size={14} /> : <Server size={14} />}
+                    {project.framework === 'React' ? <Globe size={18} /> : <Server size={18} />}
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className={`text-[11px] font-black uppercase tracking-tight truncate ${currentPort === project.port ? 'text-white' : 'text-slate-300'}`}>
+                      <span className={`text-xs font-black uppercase tracking-tight truncate ${currentPort === project.port ? 'text-gray-900' : 'text-slate-200'}`}>
                         {project.name}
                       </span>
-                      <span className="text-[10px] font-mono opacity-50">:{project.port}</span>
+                      <span className={`text-[10px] font-mono ${currentPort === project.port ? 'text-gray-400' : 'text-slate-600'}`}>:{project.port}</span>
                     </div>
-                    <div className="text-[9px] text-slate-500 uppercase font-bold tracking-widest truncate">{project.subtitle}</div>
+                    <div className={`text-[10px] uppercase font-bold tracking-[0.15em] truncate ${currentPort === project.port ? 'text-cyan-600' : 'text-slate-500'}`}>
+                      {project.status === 'scanning' ? 'Verifying Stack...' : project.subtitle}
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-center w-5">
+                  <div className="flex items-center justify-center w-6">
                     {project.status === 'scanning' ? (
-                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
                     ) : project.status === 'online' ? (
-                      <CheckCircle2 size={12} className="text-green-500" />
-                    ) : (
-                      <AlertCircle size={12} className="text-slate-700" />
-                    )}
+                      <div className={`w-2 h-2 rounded-full transition-colors ${currentPort === project.port ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]'}`} />
+                    ) : null}
                   </div>
                 </div>
-
-                {/* Selection Indicator */}
-                {currentPort === project.port && (
-                  <motion.div 
-                    layoutId="active-border"
-                    className="absolute inset-0 border border-cyan-400/50 rounded-xl"
-                    initial={false}
-                  />
-                )}
               </motion.button>
             ))
           ) : !isScanning && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 bg-white/5 rounded-2xl border border-dashed border-white/10 text-center space-y-3"
+              className="p-8 bg-white/5 rounded-3xl border border-dashed border-white/10 text-center space-y-4"
             >
-              <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-600">
-                <Cpu size={20} />
+              <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto text-slate-500 transform rotate-6 border border-white/5">
+                <Cpu size={24} />
               </div>
-              <div className="space-y-1">
-                <p className="text-[11px] font-bold text-slate-200 uppercase tracking-widest">No Active Servers</p>
-                <p className="text-[9px] text-slate-500 leading-relaxed uppercase font-mono">
-                  Probing complete. No local development services detected on standard ports.
+              <div className="space-y-2">
+                <p className="text-xs font-black text-slate-200 uppercase tracking-widest">No Active Nodes</p>
+                <p className="text-[10px] text-slate-500 leading-relaxed uppercase font-mono px-4">
+                  The bridge is silent. Start a development server in Termux to begin.
                 </p>
               </div>
               <button 
                 onClick={onShowDocs}
-                className="text-[10px] font-black text-cyan-400 hover:text-cyan-300 uppercase tracking-tighter italic border-b border-cyan-400/20 pb-0.5"
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-full text-[10px] font-black text-cyan-400 transition-colors uppercase tracking-widest"
               >
-                Learn how to start a service &rarr;
+                Setup Guide
               </button>
             </motion.div>
           )}

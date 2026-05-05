@@ -80,42 +80,35 @@ export default function PhonePreview({ currentPort }: PhonePreviewProps) {
             {/* Header bar - DRAG HANDLE */}
             <div 
               onPointerDown={(e) => dragControls.start(e)}
-              className="bg-[#f0f0f0] px-3 py-1.5 flex items-center justify-between border-b border-gray-200 group cursor-grab active:cursor-grabbing touch-none"
+              className="bg-white px-4 py-2.5 flex items-center justify-between border-b border-gray-100 group cursor-grab active:cursor-grabbing touch-none rounded-t-3xl"
             >
-              <div className="flex items-center gap-2">
-                <GripHorizontal size={12} className="text-gray-400" />
-                <span className="text-[10px] font-bold text-gray-600 uppercase tracking-tight">TermuxLive</span>
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-red-400/20 border border-red-400/40" />
+                  <div className="w-2 h-2 rounded-full bg-yellow-400/20 border border-yellow-400/40" />
+                  <div className="w-2 h-2 rounded-full bg-green-400/20 border border-green-400/40" />
+                </div>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Termux::Bridge</span>
               </div>
-              <div className="flex items-center gap-1.5 grayscale group-hover:grayscale-0 transition-all">
-                <button onClick={() => setIsMini(!isMini)} className="p-0.5 hover:bg-gray-200 rounded pointer-events-auto">
-                  {isMini ? <Maximize2 size={10} /> : <Minimize2 size={10} />}
+              <div className="flex items-center gap-2 opacity-40 group-hover:opacity-100 transition-all">
+                <button onClick={() => setIsMini(!isMini)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors pointer-events-auto">
+                  {isMini ? <Maximize2 size={12} className="text-gray-600" /> : <Minimize2 size={12} className="text-gray-600" />}
                 </button>
-                <button 
-                  onClick={() => {
-                    const frame = document.querySelector('iframe');
-                    if (frame) frame.src = frame.src;
-                  }}
-                  className="p-0.5 hover:bg-gray-200 rounded pointer-events-auto"
-                >
-                  <RefreshCw size={10} className="text-cyan-500" />
-                </button>
-                <button onClick={() => setIsFloating(false)} className="p-0.5 hover:bg-red-100 rounded pointer-events-auto">
-                  <X size={10} className="text-red-500" />
+                <button onClick={() => setIsFloating(false)} className="p-1 hover:bg-red-50 rounded-lg transition-colors pointer-events-auto">
+                  <X size={12} className="text-red-500" />
                 </button>
               </div>
             </div>
 
             {/* Browser Content */}
-            <div className="relative w-full h-full bg-white overflow-hidden pointer-events-auto">
+            <div className="relative w-full h-full bg-white overflow-hidden pointer-events-auto rounded-b-3xl">
               {currentPort ? (
                 <div className="w-full h-full flex flex-col">
-                  <div className="h-6 bg-gray-100 border-b border-gray-200 flex items-center px-4 justify-between shrink-0">
-                    <div className="flex gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                  <div className="h-10 bg-gray-50/50 backdrop-blur-sm border-b border-gray-100 flex items-center px-4 justify-between shrink-0">
+                    <div className="flex items-center gap-2 px-3 py-1 bg-white border border-gray-100 rounded-full flex-1 max-w-[180px]">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                      <div className="text-[9px] font-mono text-gray-500 truncate lowercase">localhost:{currentPort}</div>
                     </div>
-                    <div className="text-[7px] font-mono text-gray-400">127.0.0.1:{currentPort}</div>
-                    <div className="w-3 h-3" />
                   </div>
                   <iframe 
                     src={`http://localhost:${currentPort}`}
@@ -124,12 +117,47 @@ export default function PhonePreview({ currentPort }: PhonePreviewProps) {
                   />
                 </div>
               ) : (
-                <div className="p-4 flex flex-col h-full items-center justify-center text-center bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat">
-                  <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mb-2 animate-pulse">
-                    <Layout className="text-cyan-600" size={24} />
+                <div className="p-6 flex flex-col h-full bg-[#FAFAFA]">
+                  <div className="space-y-6">
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-black text-gray-900 uppercase italic tracking-tighter">System Status</h3>
+                      <p className="text-[9px] text-gray-400 uppercase font-bold tracking-widest">Awaiting local signal...</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                       <div className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-1 text-center">
+                          <span className="text-[8px] font-black text-gray-300 uppercase block">Port</span>
+                          <span className="text-xs font-mono font-bold text-cyan-500">NULL</span>
+                       </div>
+                       <div className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-1 text-center">
+                          <span className="text-[8px] font-black text-gray-300 uppercase block">Ping</span>
+                          <span className="text-xs font-mono font-bold text-gray-400">--ms</span>
+                       </div>
+                    </div>
+
+                    <div className="p-4 bg-gray-900 rounded-2xl border border-white/5 space-y-3">
+                       <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-black text-white/50 uppercase tracking-widest">Bridge Logs</span>
+                          <div className="flex gap-1">
+                             <div className="w-1 h-1 rounded-full bg-cyan-500 animate-bounce" />
+                          </div>
+                       </div>
+                       <div className="space-y-1.5 font-mono text-[8px]">
+                          <div className="text-cyan-400/70">[0.00s] INIT_BOOT_SEQUENCE</div>
+                          <div className="text-white/40">[0.12s] SCANNING_LOCAL_STACK</div>
+                          <div className="text-white/40">[0.15s] WAITING_FOR_AM_INTENT</div>
+                       </div>
+                    </div>
                   </div>
-                  <h3 className="text-sm font-black text-gray-900 leading-tight">Bridge Ready.</h3>
-                  <p className="text-[9px] text-gray-500 mt-1 uppercase font-bold tracking-widest">Awaiting local signal...</p>
+
+                  <div className="mt-auto pt-4 border-t border-gray-100">
+                    <div className="flex flex-col gap-2">
+                       <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="w-1/3 h-full bg-cyan-500 rounded-full" />
+                       </div>
+                       <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center">Protocol v2.4.1 Active</span>
+                    </div>
+                  </div>
                 </div>
               )}
 

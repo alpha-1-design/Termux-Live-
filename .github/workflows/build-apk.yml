@@ -12,6 +12,21 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build Web Assets
+      run: npm run build
+
+    - name: Sync Capacitor
+      run: npx cap copy android
+
     - name: set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -29,7 +44,8 @@ jobs:
         if [ -d "android" ]; then
           cd android && ./gradlew assembleDebug
         else
-          echo "Android source not found. Skipping build step."
+          echo "::error::Android source directory not found. Please ensure the /android folder exists in the repository root."
+          exit 1
         fi
 
     - name: Upload APK

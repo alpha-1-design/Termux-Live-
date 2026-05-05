@@ -1,0 +1,5 @@
+{
+	"appId": "com.termux.live",
+	"appName": "TermuxLive",
+	"webDir": "dist"
+}
